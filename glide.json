@@ -7,11 +7,6 @@
       "name": "imageUrl",
       "displayName": "Image URL",
       "type": "string"
-    },
-    {
-      "name": "processedFlag",
-      "displayName": "Processed Flag",
-      "type": "string"
     }
   ],
   "result": {
