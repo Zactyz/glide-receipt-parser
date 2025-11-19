@@ -6,8 +6,13 @@ window.function = async function (imageUrl) {
   // Extract value from parameter
   imageUrl = imageUrl?.value ?? "";
   
+  console.log('[Receipt Parser] Function called with imageUrl:', imageUrl ? 'present' : 'missing');
+  
   // Return undefined if no imageUrl is provided (conditional column will handle this)
-  if (!imageUrl) return undefined;
+  if (!imageUrl) {
+    console.log('[Receipt Parser] No imageUrl provided, returning undefined');
+    return undefined;
+  }
 
   // Return a "waiting" status if imageUrl is empty (shouldn't happen with conditional column)
   const result = {
@@ -25,6 +30,7 @@ window.function = async function (imageUrl) {
   };
 
   try {
+    console.log('[Receipt Parser] Calling Cloudflare endpoint...');
     // Call the Cloudflare receipt parser endpoint
     const response = await fetch('https://receipt-parser.zachtyz.workers.dev/', {
       method: 'POST',
@@ -33,6 +39,8 @@ window.function = async function (imageUrl) {
       },
       body: JSON.stringify({ imageUrl })
     });
+    
+    console.log('[Receipt Parser] Response status:', response.status, response.statusText);
 
     // Handle HTTP errors
     if (!response.ok) {
@@ -67,6 +75,7 @@ window.function = async function (imageUrl) {
     return result;
   } catch (error) {
     // Network or parsing errors
+    console.error('[Receipt Parser] Fetch error:', error);
     result.status = "error";
     result.error = `Error: ${error.message}`;
     return result;
