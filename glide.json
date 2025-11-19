@@ -1,10 +1,11 @@
 {
+  "kind": "column",
   "name": "Receipt Parser",
   "description": "Parses receipt information from an image URL using Tabscanner OCR",
   "parameters": [
     {
       "name": "imageUrl",
-      "type": "string",
+      "type": "image-uri",
       "description": "URL of the receipt image to parse"
     }
   ],

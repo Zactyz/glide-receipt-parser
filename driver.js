@@ -1,34 +1,17 @@
-// Driver - Interface between function.js and Glide
-// This file handles the communication between your custom function and Glide's Experimental Code Column
+// Driver.js - Interface between Glide and your function.js code
+// This file should not be modified unless you know what you're doing
 
 (function() {
-  // Check if the function is defined
+  'use strict';
+  
   if (typeof window.function !== 'function') {
-    console.error('window.function is not defined');
+    console.error('function.js must define window.function');
     return;
   }
 
-  // Glide will call this to execute your function
-  // The parameters are passed as an array of objects with a 'value' property
-  window.runFunction = function(params) {
-    try {
-      const result = window.function(...params);
-      
-      // Handle async functions
-      if (result instanceof Promise) {
-        return result.catch(error => {
-          console.error('Error in function:', error);
-          return undefined;
-        });
-      }
-      
-      return result;
-    } catch (error) {
-      console.error('Error executing function:', error);
-      return undefined;
-    }
-  };
-
-  console.log('Driver loaded successfully');
+  // This driver handles the communication between Glide and your function
+  // Glide will call this when it needs to compute values
+  window.glide = window.glide || {};
+  window.glide.function = window.function;
 })();
 
