@@ -2,13 +2,21 @@
 // This function accepts an image URL and calls the Cloudflare receipt parser endpoint
 // It returns structured data including receipt data, status, and error information
 
-window.function = async function (imageUrl) {
-  // Extract value from parameter
+window.function = async function (imageUrl, existingResult) {
+  // Extract values from parameters
   imageUrl = imageUrl?.value ?? "";
+  existingResult = existingResult?.value ?? "";
   
   console.log('[Receipt Parser] Function called with imageUrl:', imageUrl ? 'present' : 'missing');
+  console.log('[Receipt Parser] Existing result:', existingResult ? 'present' : 'missing');
   
-  // Return undefined if no imageUrl is provided (conditional column will handle this)
+  // If result already exists, return it (prevents reprocessing and API calls)
+  if (existingResult && existingResult.trim() !== "" && existingResult !== "undefined") {
+    console.log('[Receipt Parser] Result already exists, returning existing data - no API call');
+    return existingResult; // Return existing JSON string, don't reprocess
+  }
+  
+  // Return undefined if no imageUrl is provided
   if (!imageUrl) {
     console.log('[Receipt Parser] No imageUrl provided, returning undefined');
     return undefined;
