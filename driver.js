@@ -18,7 +18,7 @@ window.addEventListener("message", async function(event) {
   }
   const response = { key };
   if (result !== undefined) {
-    response.result = { type: "object", value: result };
+    response.result = { type: "string", value: result };
   }
   if (error !== undefined) {
     response.error = error;

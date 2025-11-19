@@ -46,7 +46,7 @@ window.function = async function (imageUrl) {
     if (!response.ok) {
       result.status = "error";
       result.error = `API Error: ${response.status} ${response.statusText}`;
-      return result;
+      return JSON.stringify(result);
     }
 
     // Parse the response
@@ -57,7 +57,7 @@ window.function = async function (imageUrl) {
       result.status = "not_receipt";
       result.error = "Image does not appear to be a receipt";
       result.raw = data;
-      return result;
+      return JSON.stringify(result);
     }
 
     // Success - populate receipt data
@@ -72,13 +72,14 @@ window.function = async function (imageUrl) {
     result.line_items = data.line_items ?? [];
     result.raw = data.raw ?? data;
     
-    return result;
+    // Return as JSON string (Glide requires string type)
+    return JSON.stringify(result);
   } catch (error) {
     // Network or parsing errors
     console.error('[Receipt Parser] Fetch error:', error);
     result.status = "error";
     result.error = `Error: ${error.message}`;
-    return result;
+    return JSON.stringify(result);
   }
 }
 
