@@ -1,0 +1,16 @@
+{
+  "name": "Receipt Parser",
+  "description": "Parses receipt information from an image URL using Tabscanner OCR",
+  "parameters": [
+    {
+      "name": "imageUrl",
+      "type": "string",
+      "description": "URL of the receipt image to parse"
+    }
+  ],
+  "result": {
+    "type": "object",
+    "description": "Parsed receipt data including vendor, date, total, line items, and raw OCR result"
+  }
+}
+
