@@ -12,6 +12,11 @@
       "name": "skipProcessing",
       "displayName": "Skip Processing",
       "type": "boolean"
+    },
+    {
+      "name": "existingResult",
+      "displayName": "Existing Result",
+      "type": "string"
     }
   ],
   "result": {
