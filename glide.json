@@ -1,12 +1,12 @@
 {
-  "kind": "column",
   "name": "Receipt Parser",
   "description": "Parses receipt information from an image URL using Tabscanner OCR",
-  "parameters": [
+  "author": "Zachary Zimmerman",
+  "params": [
     {
       "name": "imageUrl",
-      "type": "image-uri",
-      "description": "URL of the receipt image to parse"
+      "displayName": "Image URL",
+      "type": "image-uri"
     }
   ],
   "result": {
