@@ -7,11 +7,6 @@
       "name": "imageUrl",
       "displayName": "Image URL",
       "type": "string"
-    },
-    {
-      "name": "existingResult",
-      "displayName": "Existing Result",
-      "type": "string"
     }
   ],
   "result": {
