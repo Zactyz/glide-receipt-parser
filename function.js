@@ -1,13 +1,28 @@
 // Receipt Parser Function for Glide
 // This function accepts an image URL and calls the Cloudflare receipt parser endpoint
-// It returns the parsed receipt data including vendor, date, total, line items, etc.
+// It returns structured data including receipt data, status, and error information
 
 window.function = async function (imageUrl) {
   // Extract value from parameter
   imageUrl = imageUrl?.value ?? "";
   
-  // Return undefined if no imageUrl is provided
+  // Return undefined if no imageUrl is provided (conditional column will handle this)
   if (!imageUrl) return undefined;
+
+  // Return a "waiting" status if imageUrl is empty (shouldn't happen with conditional column)
+  const result = {
+    status: "processing",
+    is_receipt: null,
+    vendor: null,
+    date: null,
+    currency: null,
+    subtotal: null,
+    tax: null,
+    total: null,
+    line_items: [],
+    error: null,
+    raw: null
+  };
 
   try {
     // Call the Cloudflare receipt parser endpoint
@@ -21,16 +36,40 @@ window.function = async function (imageUrl) {
 
     // Handle HTTP errors
     if (!response.ok) {
-      console.error("Cloudflare receipt parser error:", response.status, response.statusText);
-      return undefined;
+      result.status = "error";
+      result.error = `API Error: ${response.status} ${response.statusText}`;
+      return result;
     }
 
-    // Parse and return the receipt data as object
+    // Parse the response
     const data = await response.json();
-    return data;
+    
+    // Check if it's actually a receipt
+    if (data.is_receipt === false) {
+      result.status = "not_receipt";
+      result.error = "Image does not appear to be a receipt";
+      result.raw = data;
+      return result;
+    }
+
+    // Success - populate receipt data
+    result.status = "success";
+    result.is_receipt = data.is_receipt ?? true;
+    result.vendor = data.vendor ?? null;
+    result.date = data.date ?? null;
+    result.currency = data.currency ?? null;
+    result.subtotal = data.subtotal ?? null;
+    result.tax = data.tax ?? null;
+    result.total = data.total ?? null;
+    result.line_items = data.line_items ?? [];
+    result.raw = data.raw ?? data;
+    
+    return result;
   } catch (error) {
-    console.error("Error calling receipt parser:", error.message);
-    return undefined;
+    // Network or parsing errors
+    result.status = "error";
+    result.error = `Error: ${error.message}`;
+    return result;
   }
 }
 
