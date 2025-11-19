@@ -10,8 +10,7 @@
     }
   ],
   "result": {
-    "type": "object",
-    "description": "Parsed receipt data including vendor, date, total, line items, and raw OCR result"
+    "type": "object"
   }
 }
 
