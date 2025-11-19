@@ -1,34 +1,107 @@
 // Receipt Parser Function for Glide
 // This function accepts an image URL and calls the Cloudflare receipt parser endpoint
 // It returns structured data including receipt data, status, and error information
+// Includes caching based on image URL to prevent repeated API calls
 
-window.function = async function (imageUrl, skipProcessing, existingResult) {
+// Cache storage key prefix
+const CACHE_PREFIX = 'receipt_parser_cache_';
+
+// Helper function to get cache key from image URL
+function getCacheKey(imageUrl) {
+  // Use a hash of the URL as the cache key (or just use URL if it's reasonable length)
+  // For simplicity, we'll use the URL directly (localStorage keys can be long)
+  return CACHE_PREFIX + btoa(imageUrl).replace(/[/+=]/g, '_').substring(0, 50);
+}
+
+// Helper function to get cached result
+function getCachedResult(imageUrl) {
+  try {
+    const cacheKey = getCacheKey(imageUrl);
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      // Check if cache is still valid (optional: add expiration)
+      console.log('[Receipt Parser] Cache hit for:', imageUrl.substring(0, 50));
+      return parsed;
+    }
+  } catch (e) {
+    console.error('[Receipt Parser] Cache read error:', e);
+  }
+  return null;
+}
+
+// Helper function to cache result
+function cacheResult(imageUrl, result) {
+  try {
+    const cacheKey = getCacheKey(imageUrl);
+    localStorage.setItem(cacheKey, JSON.stringify({
+      result: result,
+      timestamp: Date.now(),
+      url: imageUrl
+    }));
+    console.log('[Receipt Parser] Cached result for:', imageUrl.substring(0, 50));
+  } catch (e) {
+    console.error('[Receipt Parser] Cache write error:', e);
+    // If storage is full, try to clear old entries
+    try {
+      clearOldCacheEntries();
+      localStorage.setItem(cacheKey, JSON.stringify({
+        result: result,
+        timestamp: Date.now(),
+        url: imageUrl
+      }));
+    } catch (e2) {
+      console.error('[Receipt Parser] Cache write failed after cleanup:', e2);
+    }
+  }
+}
+
+// Helper function to clear old cache entries (keeps last 100)
+function clearOldCacheEntries() {
+  try {
+    const keys = Object.keys(localStorage).filter(k => k.startsWith(CACHE_PREFIX));
+    if (keys.length > 100) {
+      // Sort by timestamp and remove oldest
+      const entries = keys.map(k => ({
+        key: k,
+        timestamp: JSON.parse(localStorage.getItem(k)).timestamp || 0
+      })).sort((a, b) => a.timestamp - b.timestamp);
+      
+      // Remove oldest entries
+      const toRemove = entries.slice(0, entries.length - 100);
+      toRemove.forEach(entry => localStorage.removeItem(entry.key));
+      console.log('[Receipt Parser] Cleared', toRemove.length, 'old cache entries');
+    }
+  } catch (e) {
+    console.error('[Receipt Parser] Cache cleanup error:', e);
+  }
+}
+
+window.function = async function (imageUrl, skipProcessing) {
   // Extract values from parameters
   imageUrl = imageUrl?.value ?? "";
   skipProcessing = skipProcessing?.value ?? false;
-  existingResult = existingResult?.value ?? "";
   
   console.log('[Receipt Parser] Function called with imageUrl:', imageUrl ? 'present' : 'missing');
   console.log('[Receipt Parser] Skip processing:', skipProcessing);
-  console.log('[Receipt Parser] Existing result:', existingResult ? 'present' : 'missing');
   
-  // If skipProcessing is true, return existing result to preserve it (no API call)
+  // If skipProcessing is true, exit immediately (no API call)
   if (skipProcessing === true) {
-    console.log('[Receipt Parser] Skip processing is true, returning existing result - no API call');
-    // Return existing result if available, otherwise undefined
-    return existingResult && existingResult.trim() !== "" ? existingResult : undefined;
-  }
-  
-  // If result already exists, return it (prevents reprocessing)
-  if (existingResult && existingResult.trim() !== "" && existingResult !== "undefined") {
-    console.log('[Receipt Parser] Result already exists, returning existing data - no API call');
-    return existingResult;
+    console.log('[Receipt Parser] Skip processing is true, returning undefined - no API call');
+    return undefined;
   }
   
   // Return undefined if no imageUrl is provided
   if (!imageUrl) {
     console.log('[Receipt Parser] No imageUrl provided, returning undefined - no API call');
     return undefined;
+  }
+
+  // Check cache first - if we've processed this image URL before, return cached result
+  const cached = getCachedResult(imageUrl);
+  if (cached && cached.result) {
+    console.log('[Receipt Parser] Returning cached result - no API call');
+    return cached.result; // Return cached JSON string
   }
 
   // Return a "waiting" status if imageUrl is empty (shouldn't happen with conditional column)
@@ -63,7 +136,9 @@ window.function = async function (imageUrl, skipProcessing, existingResult) {
     if (!response.ok) {
       result.status = "error";
       result.error = `API Error: ${response.status} ${response.statusText}`;
-      return JSON.stringify(result);
+      const resultString = JSON.stringify(result);
+      // Don't cache errors - allow retry on next call
+      return resultString;
     }
 
     // Parse the response
@@ -74,7 +149,10 @@ window.function = async function (imageUrl, skipProcessing, existingResult) {
       result.status = "not_receipt";
       result.error = "Image does not appear to be a receipt";
       result.raw = data;
-      return JSON.stringify(result);
+      const resultString = JSON.stringify(result);
+      // Cache even error results to avoid reprocessing
+      cacheResult(imageUrl, resultString);
+      return resultString;
     }
 
     // Success - populate receipt data
@@ -89,8 +167,14 @@ window.function = async function (imageUrl, skipProcessing, existingResult) {
     result.line_items = data.line_items ?? [];
     result.raw = data.raw ?? data;
     
+    // Convert to JSON string
+    const resultString = JSON.stringify(result);
+    
+    // Cache the result for future use
+    cacheResult(imageUrl, resultString);
+    
     // Return as JSON string (Glide requires string type)
-    return JSON.stringify(result);
+    return resultString;
   } catch (error) {
     // Network or parsing errors
     console.error('[Receipt Parser] Fetch error:', error);
