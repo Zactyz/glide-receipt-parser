@@ -10,7 +10,7 @@
     }
   ],
   "result": {
-    "type": "string"
+    "type": "object"
   }
 }
 
