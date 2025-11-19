@@ -25,9 +25,9 @@ window.function = async function (imageUrl) {
       return undefined;
     }
 
-    // Parse and return the receipt data
+    // Parse and return the receipt data as JSON string
     const data = await response.json();
-    return data;
+    return JSON.stringify(data);
   } catch (error) {
     console.error("Error calling receipt parser:", error.message);
     return undefined;
