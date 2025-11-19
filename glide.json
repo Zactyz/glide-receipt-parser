@@ -9,8 +9,8 @@
       "type": "string"
     },
     {
-      "name": "existingResult",
-      "displayName": "Existing Result",
+      "name": "processedFlag",
+      "displayName": "Processed Flag",
       "type": "string"
     }
   ],
